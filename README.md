@@ -1,7 +1,7 @@
 # Motion Playground
 
-A small show of six playable interaction pieces.
+6 exploratory motion concepts. Built by Jared Haggit.
 
 Open a card, then move or scroll. Built as a static site with vanilla WebGL.
 
-[Made by Jared Haggit](https://www.linkedin.com/in/jaredhaggit/)
+[Jared Haggit](https://www.linkedin.com/in/jaredhaggit/)
