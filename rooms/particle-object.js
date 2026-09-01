@@ -66,12 +66,29 @@ void main () {
 
 const CAM_DIST = 2.15;
 const FOV = 18;
-const RADIUS_PX = 400;
-const STRENGTH = 2;
-const SWIRL = 1.4;
-const SPRING = 0.85;
-const DRIFT = 1.6;
-const POINT_SIZE = 9.2;
+const TOUCH_LIFT_PX = 44;
+const DESKTOP = {
+  radius: 400,
+  strength: 2,
+  swirl: 1.4,
+  spring: 0.85,
+  drift: 1.6,
+  size: 9.2,
+  count: 54000,
+};
+const TOUCH = {
+  radius: 220,
+  strength: 2.1,
+  swirl: 1.1,
+  spring: 0.4,
+  drift: 1.6,
+  size: 11.5,
+  count: 10000,
+};
+
+function isCoarsePointer() {
+  return window.matchMedia("(pointer: coarse)").matches;
+}
 
 function icosahedronFaces() {
   const t = (1 + Math.sqrt(5)) / 2;
@@ -210,11 +227,12 @@ function mul4(a, b) {
 }
 
 export function create(canvas, { photo } = {}) {
-  if (prefersReducedMotion()) return { destroy() {}, still: true };
+  const reduced = prefersReducedMotion();
+  const cfg = isCoarsePointer() ? TOUCH : DESKTOP;
   const gl = createGL(canvas);
   if (!gl) return { destroy() {}, noWebGL: true };
 
-  const count = 54000;
+  const count = cfg.count;
   const { homes, seeds } = sampleCloud(count);
   const positions = homes.slice();
   const velocities = new Float32Array(count * 3);
@@ -247,7 +265,7 @@ export function create(canvas, { photo } = {}) {
   gl.vertexAttribPointer(1, 1, gl.FLOAT, false, 0, 0);
 
   const host = canvas.parentElement ?? canvas;
-  const pointer = { x: 0.5, y: 0.5, active: false };
+  const pointer = { x: 0.5, y: 0.5, active: false, type: "mouse" };
   let pointerSpeed = 0;
   let shoveX = 0;
   let shoveY = 0;
@@ -259,27 +277,98 @@ export function create(canvas, { photo } = {}) {
   let visible = document.visibilityState === "visible";
   let photoTex = null;
   let palette = visiblePalette(DEFAULT_PALETTE);
+  const prevTouchAction = canvas.style.touchAction;
+  canvas.style.touchAction = "none";
 
-  function onMove(event) {
+  const ring = document.createElement("div");
+  ring.className = "touch-ring";
+  ring.hidden = true;
+  host.appendChild(ring);
+
+  function isChrome(event) {
+    return Boolean(event.target?.closest?.(".room-close, .controls"));
+  }
+
+  function hideRing() {
+    ring.hidden = true;
+  }
+
+  function placeRing(clientX, clientY) {
+    const rect = host.getBoundingClientRect();
+    ring.style.left = `${clientX - rect.left}px`;
+    ring.style.top = `${clientY - rect.top}px`;
+    ring.hidden = false;
+  }
+
+  function readPointer(event) {
     const rect = canvas.getBoundingClientRect();
     const width = Math.max(rect.width, 1);
     const height = Math.max(rect.height, 1);
-    const x = (event.clientX - rect.left) / width;
-    const y = (event.clientY - rect.top) / height;
+    let px = event.clientX - rect.left;
+    let py = event.clientY - rect.top;
+    if (event.pointerType === "touch") py -= TOUCH_LIFT_PX;
+    return {
+      x: px / width,
+      y: py / height,
+      width,
+      height,
+    };
+  }
+
+  function onPointerDown(event) {
+    if (reduced || isChrome(event)) return;
+    if (event.pointerType === "mouse") return;
+    const next = readPointer(event);
+    pointer.x = next.x;
+    pointer.y = next.y;
+    pointer.type = event.pointerType;
+    pointer.active = true;
+    lastPointerTime = performance.now();
+    pointerSpeed = 0;
+    shoveX = 0;
+    shoveY = 0;
+    placeRing(event.clientX, event.clientY - TOUCH_LIFT_PX);
+    try {
+      navigator.vibrate?.(10);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function onMove(event) {
+    if (reduced || isChrome(event)) return;
+    if (event.pointerType !== "mouse" && !pointer.active) return;
+    const next = readPointer(event);
     const now = performance.now();
     if (pointer.active && lastPointerTime) {
       const moveDt = Math.max((now - lastPointerTime) / 1000, 1e-4);
-      const dx = (x - pointer.x) * width;
-      const dy = (y - pointer.y) * height;
+      const dx = (next.x - pointer.x) * next.width;
+      const dy = (next.y - pointer.y) * next.height;
       const speed = Math.hypot(dx, dy) / moveDt;
       pointerSpeed += (speed - pointerSpeed) * 0.35;
       shoveX = dx / moveDt;
       shoveY = dy / moveDt;
     }
-    pointer.x = x;
-    pointer.y = y;
+    pointer.x = next.x;
+    pointer.y = next.y;
+    pointer.type = event.pointerType;
     lastPointerTime = now;
     pointer.active = true;
+    if (event.pointerType === "touch" || event.pointerType === "pen") {
+      placeRing(event.clientX, event.clientY - (event.pointerType === "touch" ? TOUCH_LIFT_PX : 0));
+    } else {
+      hideRing();
+    }
+  }
+
+  function onPointerUp(event) {
+    if (event.pointerType === "mouse") return;
+    pointer.active = false;
+    pointerSpeed = 0;
+    shoveX = 0;
+    shoveY = 0;
+    lastPointerTime = 0;
+    hideRing();
   }
 
   function onLeave() {
@@ -287,6 +376,7 @@ export function create(canvas, { photo } = {}) {
     pointerSpeed = 0;
     shoveX = 0;
     shoveY = 0;
+    hideRing();
   }
 
   function onVisibility() {
@@ -294,9 +384,13 @@ export function create(canvas, { photo } = {}) {
     if (visible) loop();
   }
 
-  host.addEventListener("pointermove", onMove, { passive: true });
-  host.addEventListener("pointerleave", onLeave, { passive: true });
-  host.addEventListener("pointercancel", onLeave, { passive: true });
+  if (!reduced) {
+    host.addEventListener("pointerdown", onPointerDown, { passive: true });
+    host.addEventListener("pointermove", onMove, { passive: true });
+    host.addEventListener("pointerup", onPointerUp, { passive: true });
+    host.addEventListener("pointerleave", onLeave, { passive: true });
+    host.addEventListener("pointercancel", onPointerUp, { passive: true });
+  }
   document.addEventListener("visibilitychange", onVisibility);
   const observer = new ResizeObserver(() => {});
   observer.observe(canvas);
@@ -308,7 +402,7 @@ export function create(canvas, { photo } = {}) {
     const { right, up, forward } = cameraBasis(eye);
     const camDist = Math.hypot(eye[0], eye[1], eye[2]) || CAM_DIST;
     const worldPerPx = (2 * camDist * tanHalf) / Math.max(height, 1);
-    const localRadius = RADIUS_PX * worldPerPx;
+    const localRadius = cfg.radius * worldPerPx;
     const r2max = localRadius * localRadius;
     const ox = eye[0];
     const oy = eye[1];
@@ -322,15 +416,15 @@ export function create(canvas, { photo } = {}) {
     dx /= dl;
     dy /= dl;
     dz /= dl;
-    const pushAccel = 26 * STRENGTH;
-    const shove = Math.min(pointerSpeed / 900, 2) * 14 * STRENGTH;
+    const pushAccel = 26 * cfg.strength;
+    const shove = Math.min(pointerSpeed / 900, 2) * 14 * cfg.strength;
     const sl = Math.hypot(shoveX, shoveY) || 1;
     const sRight = (shoveX / sl) * shove;
     const sUp = (-shoveY / sl) * shove;
     const sx = right[0] * sRight + up[0] * sUp;
     const sy = right[1] * sRight + up[1] * sUp;
     const sz = right[2] * sRight + up[2] * sUp;
-    const stiff = 60 * SPRING;
+    const stiff = 60 * cfg.spring;
     const damp = Math.exp(-7.2 * dt);
 
     for (let i = 0; i < count; i += 1) {
@@ -341,7 +435,7 @@ export function create(canvas, { photo } = {}) {
       let vx = velocities[ix];
       let vy = velocities[ix + 1];
       let vz = velocities[ix + 2];
-      if (pointer.active && STRENGTH > 0) {
+      if (pointer.active && cfg.strength > 0) {
         const wx = x - ox;
         const wy = y - oy;
         const wz = z - oz;
@@ -361,9 +455,9 @@ export function create(canvas, { photo } = {}) {
           const tx = dy * rz - dz * ry;
           const ty = dz * rx - dx * rz;
           const tz = dx * ry - dy * rx;
-          vx += (rx + tx * SWIRL) * pushAccel * f + sx * f;
-          vy += (ry + ty * SWIRL) * pushAccel * f + sy * f;
-          vz += (rz + tz * SWIRL) * pushAccel * f + sz * f;
+          vx += (rx + tx * cfg.swirl) * pushAccel * f + sx * f;
+          vy += (ry + ty * cfg.swirl) * pushAccel * f + sy * f;
+          vz += (rz + tz * cfg.swirl) * pushAccel * f + sz * f;
         }
       }
       vx += (homes[ix] - x) * stiff * dt;
@@ -392,7 +486,7 @@ export function create(canvas, { photo } = {}) {
     const width = canvas.clientWidth;
     const height = Math.max(canvas.clientHeight, 1);
     const eye = [0, 0, CAM_DIST];
-    simulate(dt, width, height, eye);
+    if (!reduced) simulate(dt, width, height, eye);
     const aspect = width / height;
     const proj = perspective(FOV, aspect, 0.1, 20);
     const view = lookAt(eye, [0, 0, 0]);
@@ -413,10 +507,10 @@ export function create(canvas, { photo } = {}) {
     gl.useProgram(program);
     gl.bindVertexArray(vao);
     gl.uniformMatrix4fv(uViewProj, false, vp);
-    gl.uniform1f(uSize, POINT_SIZE);
+    gl.uniform1f(uSize, cfg.size);
     gl.uniform1f(uDpr, Math.min(window.devicePixelRatio || 1, 2));
     gl.uniform1f(uTime, elapsed);
-    gl.uniform1f(uDrift, DRIFT);
+    gl.uniform1f(uDrift, reduced ? 0 : cfg.drift);
     setColor3(gl, uAccent, palette.accent);
     setColor3(gl, uHighlight, palette.highlight);
     gl.drawArrays(gl.POINTS, 0, count);
@@ -436,9 +530,13 @@ export function create(canvas, { photo } = {}) {
       destroyed = true;
       cancelAnimationFrame(raf);
       observer.disconnect();
+      ring.remove();
+      canvas.style.touchAction = prevTouchAction;
+      host.removeEventListener("pointerdown", onPointerDown);
       host.removeEventListener("pointermove", onMove);
+      host.removeEventListener("pointerup", onPointerUp);
       host.removeEventListener("pointerleave", onLeave);
-      host.removeEventListener("pointercancel", onLeave);
+      host.removeEventListener("pointercancel", onPointerUp);
       document.removeEventListener("visibilitychange", onVisibility);
       gl.deleteBuffer(posBuf);
       gl.deleteBuffer(seedBuf);
