@@ -1,5 +1,4 @@
 import {
-  DEFAULT_PALETTE,
   attachRuntime,
   bakePhoto,
   bakeType,
@@ -202,7 +201,7 @@ void main () {
 
 const TILE_SIZE = 150;
 const GAP = 0;
-const CORNER_RADIUS = 0;
+const CORNER_RADIUS = 16;
 const AMPLITUDE = 4.2;
 const WAVE_SPEED = 0.22;
 const FREQUENCY = 12;
@@ -211,10 +210,11 @@ const FADE_TIME = 0.2;
 const MAX_LIFT = 1;
 const JITTER = 0;
 const LIFT_HEIGHT = 60;
-const PERSPECTIVE = 1200;
+const PERSPECTIVE = 700;
 const TILT = 1;
 const SHADING = 0.05;
 const TINT_STRENGTH = 0.2;
+const TINT = [198 / 255, 165 / 255, 133 / 255];
 const MAX_TRAIL = 64;
 const TRAIL_SPACING = 0.03;
 
@@ -292,7 +292,7 @@ export function create(canvas, { name, verb, photo }) {
         tileFbo: null,
         tilesX: 0,
         tilesY: 0,
-        tint: photoBake?.palette?.accent ?? DEFAULT_PALETTE.accent,
+        tint: TINT,
       };
     },
     frame(state, { gl, canvas, dt, pointer }) {
