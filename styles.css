@@ -1,0 +1,311 @@
+:root {
+  --ground: #0a0a0a;
+  --ink: #f3eee6;
+  --mute: rgba(243, 238, 230, 0.4);
+  --serif: "Newsreader", Georgia, "Iowan Old Style", serif;
+  --sans: "Inter", system-ui, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  overflow-x: hidden;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--sans);
+}
+
+body.is-room {
+  overflow: hidden;
+}
+
+button {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+#landing {
+  position: relative;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: clamp(1.2rem, 3.2vw, 2.6rem);
+}
+
+#landing[hidden],
+#room[hidden],
+#scrollport[hidden],
+#nowebgl[hidden] {
+  display: none;
+}
+
+.credit {
+  position: absolute;
+  top: clamp(1.2rem, 3.2vw, 2.6rem);
+  right: clamp(1.2rem, 3.2vw, 2.6rem);
+  z-index: 1;
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--mute);
+  white-space: nowrap;
+}
+
+.credit a {
+  color: rgba(243, 238, 230, 0.72);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color 0.18s ease, border-color 0.18s ease;
+}
+
+.credit a:hover,
+.credit a:focus-visible {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+h1 {
+  margin: 0 8rem 0 0;
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(2rem, 5.4vw, 4rem);
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+}
+
+h1 em {
+  font-style: italic;
+  font-weight: 300;
+}
+
+.piece-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.7rem;
+  margin-top: clamp(1.2rem, 2.8vh, 2rem);
+}
+
+.piece-grid a {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  aspect-ratio: 3 / 2;
+  padding: 0.8rem 0.95rem;
+  overflow: hidden;
+  border: 1px solid rgba(243, 238, 230, 0.18);
+  background: center / cover no-repeat var(--piece-photo, #141414);
+  color: inherit;
+  text-decoration: none;
+}
+
+@media (min-width: 800px) {
+  html,
+  body {
+    height: 100%;
+  }
+
+  #landing {
+    width: 100vw;
+    height: 100vh;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  h1 {
+    position: absolute;
+    top: 1.6rem;
+    left: 1.8rem;
+    z-index: 3;
+    margin: 0;
+    pointer-events: none;
+    text-shadow: 0 1px 18px rgba(10, 10, 10, 0.55);
+  }
+
+  .credit {
+    z-index: 3;
+  }
+
+  .piece-grid {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    gap: 0;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+  }
+
+  .piece-grid a {
+    aspect-ratio: auto;
+    min-height: 0;
+    height: 100%;
+    border-width: 0.5px;
+  }
+}
+
+.piece-grid a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(10, 10, 10, 0.62),
+    rgba(10, 10, 10, 0.08) 46%
+  );
+  pointer-events: none;
+}
+
+.piece-grid a:hover,
+.piece-grid a:focus-visible {
+  border-color: var(--ink);
+}
+
+.piece-card-verb {
+  position: relative;
+  z-index: 1;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(243, 238, 230, 0.78);
+}
+
+.piece-grid a:hover .piece-card-verb,
+.piece-grid a:focus-visible .piece-card-verb {
+  color: var(--ink);
+}
+
+#room {
+  position: fixed;
+  inset: 0;
+}
+
+#stage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: center / cover no-repeat var(--piece-photo, var(--ground));
+}
+
+#scrollport {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.scroll-spacer {
+  height: 500vh;
+}
+
+.room-type {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  margin: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 1.4rem 5.2rem;
+}
+
+.room-type.is-live {
+  visibility: hidden;
+}
+
+.room-name {
+  display: none;
+}
+
+.room-verb {
+  margin-top: 1rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+.room-nowebgl {
+  position: absolute;
+  left: 14vw;
+  bottom: 5.5rem;
+  z-index: 4;
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+.room-close {
+  position: absolute;
+  top: 1.15rem;
+  right: 1.15rem;
+  z-index: 6;
+  width: 3.75rem;
+  height: 3.75rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--ink);
+  background: rgba(12, 12, 12, 0.78);
+  border: 1px solid rgba(243, 238, 230, 0.2);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.48),
+    0 1px 0 rgba(243, 238, 230, 0.08);
+}
+
+.room-close:hover,
+.room-close:focus-visible {
+  color: var(--ink);
+  background: rgba(18, 17, 16, 0.9);
+  border-color: rgba(243, 238, 230, 0.34);
+}
+
+.controls {
+  position: absolute;
+  left: 50%;
+  bottom: 1.6rem;
+  z-index: 5;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+.controls button:hover,
+.controls button:focus-visible {
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+  }
+}

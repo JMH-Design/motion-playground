@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Motion Playground</title>
+    <meta
+      name="description"
+      content="A small show of six playable interaction pieces."
+    />
+    <meta property="og:title" content="Motion Playground" />
+    <meta
+      property="og:description"
+      content="A small show of six playable interaction pieces."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/assets/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Motion Playground" />
+    <meta
+      name="twitter:description"
+      content="A small show of six playable interaction pieces."
+    />
+    <meta name="twitter:image" content="/assets/og.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Newsreader:opsz,wght@6..72,300;6..72,400&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <!--
+      Photographs via Unsplash.
+      move: sunset over water
+      stir: night skyline
+      move-2: diagonal prism light
+      sweep: Milky Way
+      scroll: golden water
+      scroll-2: grain gradient
+    -->
+    <main id="landing">
+      <p class="credit">
+        Made by
+        <a href="https://www.linkedin.com/in/jaredhaggit/" target="_blank" rel="noopener noreferrer">Jared Haggit</a>
+      </p>
+      <h1>Motion <em>Playground</em></h1>
+      <nav class="piece-grid" aria-label="Pieces">
+        <a href="#sweep" style="--piece-photo: url('./assets/photos/sweep.jpg?v=2')">
+          <span class="piece-card-verb">sweep</span>
+        </a>
+        <a href="#move-2" style="--piece-photo: url('./assets/photos/move-2.jpg?v=4')">
+          <span class="piece-card-verb">move</span>
+        </a>
+        <a href="#move" style="--piece-photo: url('./assets/photos/move.jpg?v=3')">
+          <span class="piece-card-verb">move</span>
+        </a>
+        <a href="#scroll-2" style="--piece-photo: url('./assets/photos/scroll-2.jpg?v=3')">
+          <span class="piece-card-verb">scroll</span>
+        </a>
+        <a href="#stir" style="--piece-photo: url('./assets/photos/stir.jpg')">
+          <span class="piece-card-verb">stir</span>
+        </a>
+        <a href="#scroll" style="--piece-photo: url('./assets/photos/scroll.jpg?v=3')">
+          <span class="piece-card-verb">scroll</span>
+        </a>
+      </nav>
+    </main>
+
+    <section id="room" hidden>
+      <canvas id="stage" aria-hidden="true"></canvas>
+      <div id="scrollport" hidden>
+        <div class="scroll-spacer"></div>
+      </div>
+      <p class="room-type" id="room-type">
+        <span class="room-name" id="room-name"></span>
+        <span class="room-verb" id="room-verb"></span>
+      </p>
+      <p class="room-nowebgl" id="nowebgl" hidden>This piece needs WebGL.</p>
+      <button type="button" id="close" class="room-close" aria-label="Close">
+        ✕
+      </button>
+      <nav class="controls" aria-label="Piece">
+        <button type="button" id="prev" aria-label="Previous piece">←</button>
+        <span id="index">1 / 6</span>
+        <button type="button" id="next" aria-label="Next piece">→</button>
+      </nav>
+    </section>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
