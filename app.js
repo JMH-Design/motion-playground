@@ -122,7 +122,17 @@ window.addEventListener("keydown", (event) => {
   if (event.key === "ArrowRight") document.getElementById("next").click();
 });
 
-window.addEventListener("hashchange", sync);
+function trackView() {
+  window.va?.("event", {
+    type: "pageview",
+    url: `${location.pathname}${location.hash || "#"}`,
+  });
+}
+
+window.addEventListener("hashchange", () => {
+  sync();
+  trackView();
+});
 window.addEventListener("popstate", sync);
 
 sync();
